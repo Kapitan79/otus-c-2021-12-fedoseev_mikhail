@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 
         if (!isArchFind)
         {
-            printf("%s%d\n", "Архив не найден.");
+            printf("%s\n", "Архив не найден.");
         }
 
         fclose(inputFile);
