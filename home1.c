@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
         if (inputFile == NULL)
         {
-            printf("File \"%s\" is not open! The program will close.\n", argv[1]);
+            printf("Файл \"%s\" не открылся! Программа будет закрыта.\n", argv[1]);
             exit(ERROR_OPEN_FILE);
         }
 
