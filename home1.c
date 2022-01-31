@@ -10,7 +10,7 @@
 _Bool checkSignature(FILE *inputFile, short currIndex)
 {
     _Bool findFlag = true;
-    int sigArray[4] = {0x50, 0x4b, 0x05, 0x06};
+    int sigArray[4] = {0x50, 0x4b, 0x01, 0x02};
     int currVal     = 0;
 
     for (short arrIndex = currIndex; arrIndex < 4; arrIndex++)
@@ -27,6 +27,7 @@ _Bool checkSignature(FILE *inputFile, short currIndex)
     return findFlag;
 }
 
+
 int main(int argc, char *argv[])
 {
     if (argc > 0)
@@ -40,25 +41,9 @@ int main(int argc, char *argv[])
             exit(ERROR_OPEN_FILE);
         }
 
-        // \x50\x4b\x03\x04
         short       currSymbol      = 0     ;
         int         currCursorPos   = 0     ;
         _Bool       isArchFind      = false ;
-
-        int         fileNameLen     = 0;
-        int         fileNameSymbol  = 0;
-        short       archVersion     = 0;
-
-        struct eocdr {
-                uint16_t disk_nbr;        /* Number of this disk. */
-                uint16_t cd_start_disk;   /* Nbr. of disk with start of the CD. */
-                uint16_t disk_cd_entries; /* Nbr. of CD entries on this disk. */
-                uint16_t cd_entries;      /* Nbr. of Central Directory entries. */
-                uint32_t cd_size;         /* Central Directory size in bytes. */
-                uint32_t cd_offset;       /* Central Directory file offset. */
-                uint16_t comment_len;     /* Archive comment length. */
-                const uint8_t *comment;   /* Archive comment. */
-        }eo;
 
         while(fread(&currSymbol, 1, 1, inputFile))
         {
@@ -68,35 +53,51 @@ int main(int argc, char *argv[])
                 {
                     if (!isArchFind)
                     {
-                        //isArchFind = true;
-                        printf("%s %d\n", "Archive found.", currCursorPos     );
-
-                        fread(&eo, sizeof(eo), 1, inputFile);
-                        printf("%d\n", eo.disk_nbr);
-                        printf("%d\n", eo.cd_start_disk);
-                        printf("%d\n", eo.disk_cd_entries);
-                        printf("%d\n", eo.cd_entries);
-                        printf("%d\n", eo.cd_size);
-                        printf("%d\n", eo.cd_offset);
-                        printf("%d\n", eo.comment_len);
-                        printf("%d\n", eo.comment);
+                        isArchFind = true;
+                        printf("%s %d\n", "Archive found.", currCursorPos);
                     }
+
+                    char fileName[18] = {0};
+                    unsigned int fileNameLen    = 0;
+
+                    fseek(inputFile, currCursorPos+28, SEEK_SET);
+                    fread(&fileNameLen, 2, 1, inputFile);
+
+                    fseek(inputFile, currCursorPos+46, SEEK_SET);
+                    fread(fileName, fileNameLen, 1, inputFile);
+                    //printf("Имя %s Длина имени %d Позиция %d\n", fileName, fileNameLen, currCursorPos+46);
+                    printf("Имя файла: ");
+                    for (unsigned int charIndex = 0; charIndex < fileNameLen; charIndex++) {
+                        printf("%c", fileName[charIndex]);
+                    }
+                    printf("\n");
+
+                    currCursorPos += 80;
+                    if (fseek(inputFile, currCursorPos, SEEK_SET))
+                    {
+                        printf("Ошибка при сдвиге курсора во время перебора центрального кталога архива.");
+                        exit(ERROR_FILE_SEEK);
+                    }
+
+                    continue;
                 }
                 else
                 {
+                    ++currCursorPos;
                     if (fseek(inputFile, currCursorPos, SEEK_SET))
                     {
-                        printf("%s\n", "Error while seek position in file! The program will close.");
+                        printf("%s\n", "Ошибка при попытке сдвига курсора после неудачной проверки сигнатуры.");
                         exit(ERROR_FILE_SEEK);
                     }
+                    continue;
                 }
             }
-            currCursorPos++;
+            ++currCursorPos;
         }
 
         if (!isArchFind)
         {
-            printf("%s%d\n", "Archive not found.", currCursorPos);
+            printf("%s%d\n", "Архив не найден.");
         }
 
         fclose(inputFile);
