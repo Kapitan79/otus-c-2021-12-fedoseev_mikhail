@@ -32,6 +32,8 @@ int cp_1251Areas    [4]  = {192,     224,    168,     184};             //"ну�
 const int koi8RusArea [66] = {225,226,247,231,228,229,246,250,233,234,235,236,237,238,239,240,242,243,244,245,230,232,227,254,251,253,225,249,248,252,224,241,
     193, 194, 215, 199, 196, 197, 214, 218, 201,202,203,204,205,206,207,208,210,211,212,213,198,200,195,222,219,221,223,217,216,220,192,209,179,163}; // коды в алфавитном порядке
 
+int currCodePage[4] = {0};
+
 bool checkReWrite()
 {
     char q = 0;
@@ -54,11 +56,8 @@ bool checkReWrite()
     return isRewrite;
 }
 
-ushort convertFrom(char* codePage, int inputCode)
+void setCodepage(char* codePage)
 {
-    ushort utfCode = 0;
-    int currCodePage[4] = {0};
-
     if(strcmp(codePage, "cp-1251") == 0)
     {
         memcpy(currCodePage, cp_1251Areas, sizeof(currCodePage));
@@ -66,23 +65,37 @@ ushort convertFrom(char* codePage, int inputCode)
     else if(strcmp(codePage, "koi8") == 0)
     {
         memcpy(currCodePage, koi8Areas, sizeof(currCodePage));
+
+    }
+    else if(strcmp(codePage, "iso-8859-5") == 0)
+    {
+        memcpy(currCodePage, iso_8859_5Areas, sizeof(currCodePage));
+    }
+}
+
+ushort convertFrom(char* codePage, int inputCode)
+{
+    ushort utfCode = 0;
+
+    if(strcmp(codePage, "koi8") == 0)
+    {
         bool isRusCode = false;
-        for(int areaIndex = 0; areaIndex < 66; areaIndex++)
+        if(inputCode >= 163)
         {
-            if (koi8RusArea[areaIndex] == inputCode)
+            for(int areaIndex = 0; areaIndex < 66; areaIndex++)
             {
-                inputCode = areaIndex;
-                isRusCode = true;
+                if (koi8RusArea[areaIndex] == inputCode)
+                {
+                    inputCode = areaIndex;
+                    isRusCode = true;
+                    break;
+                }
             }
         }
         if (!isRusCode)
         {
             return inputCode;
         }
-    }
-    else if(strcmp(codePage, "iso-8859-5") == 0)
-    {
-        memcpy(currCodePage, iso_8859_5Areas, sizeof(currCodePage));
     }
 
     if (inputCode >= currCodePage[0] && inputCode < currCodePage[0]+FULL_CODE_PAGE_AREA)
@@ -129,6 +142,8 @@ int main(int argc, char *argv[])
             printf("Введено не верное имя кодировки.\nДопустимые типы кодировки cp-1251, koi8, iso-8859-5\n");
             exit(BAD_CODE_PAGE);
         }
+
+        setCodepage(argv[CODE_PAGE]);
 
         inputFile = fopen(argv[INPUT_FILE], "r");
 
