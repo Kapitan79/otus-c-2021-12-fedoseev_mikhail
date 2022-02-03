@@ -26,7 +26,7 @@ typedef unsigned short ushort;
 
 int utf8Areas       [5]  = {53392,    53424,  53632,   53377,   53649};  //"нулевые" имдексы для больших русских букв,потом 2 "нулевых" индекса малых русских букв, а также Ё и ё
 int koi8Areas       [4]  = {0,       32,     65,      66};              //"нулевые" индексы для больших и малых букв (массив koi8RusArea), а также Ё и ё
-int iso_8859_5Areas [4]  = {192,     224,    168,     184};             //"нулевые" индексы для больших и малых букв, а также Ё и ё
+int iso_8859_5Areas [4]  = {176,     208,    161,     241};             //"нулевые" индексы для больших и малых букв, а также Ё и ё
 int cp_1251Areas    [4]  = {192,     224,    168,     184};             //"нулевые" индексы для больших и малых букв, а также Ё и ё
 
 const int koi8RusArea [66] = {225,226,247,231,228,229,246,250,233,234,235,236,237,238,239,240,242,243,244,245,230,232,227,254,251,253,225,249,248,252,224,241,
@@ -88,37 +88,28 @@ ushort convertFrom(char* codePage, int inputCode)
     if (inputCode >= currCodePage[0] && inputCode < currCodePage[0]+FULL_CODE_PAGE_AREA)
     {
         utfCode = utf8Areas[0] + inputCode - currCodePage[0];
-        printf("%x - %d ::", utfCode, inputCode);
 
     }
     else if (inputCode >= currCodePage[1] && inputCode < currCodePage[1]+UTF_AREA_1)
     {
         utfCode = utf8Areas[1] + inputCode - currCodePage[1];
-        printf("%x - %d ::", utfCode, inputCode);
     }
     else if (inputCode >= currCodePage[1]+UTF_AREA_1 && inputCode < currCodePage[1]+UTF_AREA_2+UTF_AREA_1)
     {
-        //printf("%d + %d - %d :: ", utf8Areas[2], inputCode, currCodePage[1]);
         utfCode = utf8Areas[2] + inputCode - currCodePage[1] - UTF_AREA_1;
-        printf("%x - %d ::", utfCode, inputCode);
     }
     else if (inputCode == currCodePage[2] )
     {
         utfCode = utf8Areas[3];
-        printf("%x - %d ::", utfCode, inputCode);
     }
     else if (inputCode == currCodePage[3] )
     {
         utfCode = utf8Areas[4];
-        printf("%x - %d ::", utfCode, inputCode);
     }
     else
     {
-        printf(" - %d ::", inputCode);
         return inputCode;
     }
-//     int d;
-//     scanf("%d", d);
     return utfCode;
 }
 
@@ -127,8 +118,6 @@ int main(int argc, char *argv[])
     FILE *inputFile  = NULL;
     FILE *outputFile = NULL;
     FILE *checkFile  = NULL;
-
-    //printf("%d - %d", sizeof(wchar_t), sizeof(wchar_t));
 
     if(argc == 4)
     {
@@ -180,7 +169,6 @@ int main(int argc, char *argv[])
         while(fread(&currSymbol, 1, 1, inputFile))
         {
             convSymbol = htons(convertFrom(argv[CODE_PAGE], currSymbol));
-            printf(" %d - %x\n", convSymbol, convSymbol);
             fwrite(&convSymbol, sizeof(ushort), 1, outputFile);
         }
     }
